@@ -4,4 +4,5 @@ Simple php crawler using multiple-process feature of swoole
 ###Usage
 1. install [swoole](https://github.com/swoole/swoole-src)
 2. write a customer crawler in `/crawlers`(refer to JYCrawler as an example)
-3. php main.php
+3. add a new line of your customer class in `/crawlers.conf`
+4. php main.php
