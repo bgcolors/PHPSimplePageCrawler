@@ -5,10 +5,15 @@
  * Date: 2016/8/30
  * Time: 11:04
  */
+declare(ticks=1);
+function tick_handler() {
+    pcntl_signal_dispatch();
+}
+register_tick_function('tick_handler');
 
 include_once 'Crawler.php';
 
-$crawler_dir = './crawlers';
+$crawler_dir = __DIR__.'/crawlers';
 $d = dir($crawler_dir);
 while (false !== ($entry = $d->read())) {
     if ('.php' == substr($entry, -4)) {
@@ -16,6 +21,8 @@ while (false !== ($entry = $d->read())) {
     }
 }
 include_once 'Manager.php';
+
+$subPids = [];
 
 $manager = new Manager();
 
@@ -25,13 +32,13 @@ foreach ($read as $k => $crawler) {
 }
 $get = $manager->getCrawlerList();
 foreach ($get as $crawler) {
-    echo $crawler, ' has been registered', PHP_EOL;
+    echo $crawler, ' has been registered'.PHP_EOL;
 }
 
 try {
     $manager->start();
 } catch (Exception $e) {
-    echo $e->getMessage(), PHP_EOL;
+    echo $e->getMessage().PHP_EOL;
 }
 
 

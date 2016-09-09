@@ -10,7 +10,7 @@ class Crawler {
 
     private $interval = 5000000;
 
-    protected $name = '';
+    public $name = '';
 
     public function setConfig(){
 

@@ -21,7 +21,7 @@ class Manager {
         }
     }
 
-    public function readRegisterList($file='crawlers.conf') {
+    public function readRegisterList($file=__DIR__.'/crawlers.conf') {
         $fp = fopen($file, 'r+');
         if ($fp === false) {
             throw new Exception("can not open $file");
@@ -50,8 +50,9 @@ class Manager {
         function process(swoole_process $process) {
 
             $crawler = new $process->crawlerName;
+            cli_set_process_title("php crawler {$crawler->name} process");
 
-            while (true) {
+            swoole_timer_tick($crawler->getInterval(), function($interval) use ($crawler, $process) {
                 try {
                     $crawler->setConfig();
                     $content = $crawler->getContent();
@@ -63,10 +64,9 @@ class Manager {
                         }
                     }
                 } catch (Exception $e) {
-                    echo $e->getMessage(), PHP_EOL;
+                    echo $e->getMessage().PHP_EOL;
                 }
-                usleep($crawler->getInterval());
-            }
+            });
 
         }
 
@@ -75,13 +75,30 @@ class Manager {
         }
 
         $crawlers = [];
+        global $subPids;
         foreach ($this->crawlerList as $k => $v) {
             $process = new swoole_process('process', false, false);
-            $process->useQueue(0, 1);
+            $process->useQueue();
             $process->crawlerName = $v;
-            $process->start();
+            $pid = $process->start();
+            array_push($subPids, $pid);
             $crawlers[$k] = $process;
         }
+
+        function shutdown() {
+            global $subPids;
+            foreach ($subPids as $pid) {
+                if ($pid) {
+                    posix_kill($pid, SIGKILL);
+                }
+            }
+            posix_kill(posix_getpid(), SIGKILL);
+        }
+
+        pcntl_signal(SIGHUP,  "shutdown");
+        pcntl_signal(SIGTERM,  "shutdown");
+
+        cli_set_process_title('php crawler manager process');
 
         while (true) {
             foreach ($crawlers as $k => $process) {

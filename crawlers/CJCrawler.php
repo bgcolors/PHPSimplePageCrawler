@@ -3,11 +3,11 @@ include_once __DIR__.'/../../vendor/autoload.php';
 
 use Predis\Client;
 
-class JYCrawler extends Crawler {
+class CJCrawler extends Crawler {
 
     private $interval = 2000;
 
-    public $name = 'jy';
+    public $name = 'cj';
 
     private $conf;
 
@@ -16,9 +16,9 @@ class JYCrawler extends Crawler {
     private $redis;
 
     public function __construct() {
-        $fp = fopen(__DIR__.'/JYCrawler.json', 'r');
+        $fp = fopen(__DIR__.'/CJCrawler.json', 'r');
         if ($fp === false) {
-            throw new Exception(__DIR__.'/JYCrawler.json can not be open');
+            throw new Exception(__DIR__.'/CJCrawler.json can not be open');
         }
 
         $content = fread($fp, 1000);
@@ -80,6 +80,10 @@ class JYCrawler extends Crawler {
             if (!empty($v) && strpos($v, ',')) {
                 array_push($result, $v);
             }
+
+            if (!empty($v) && strpos($v, ',') === false) {
+                $this->quoteTime = $v;
+            }
         }
         return empty($result) ? [] : $result;
     }
@@ -91,17 +95,17 @@ class JYCrawler extends Crawler {
         }
 
         $result = [];
-        $result['code'] = $tmp[1];
-        $result['name'] = $tmp[0];
-        $result['last'] =  ($tmp[7]);
-        $result['high'] = $tmp[5];
-        $result['low'] = $tmp[6];
-        $result['open'] = $tmp[4];
+        $result['code'] = $tmp[0];
+        $result['name'] = $tmp[1];
+        $result['last'] =  ($tmp[6]);
+        $result['high'] = $tmp[4];
+        $result['low'] = $tmp[5];
+        $result['open'] = $tmp[3];
         $result['lastClose'] = $tmp[2];
         $result['volume'] = 1;
-        $result['quoteTime'] = $tmp[39];
-        $result['swing'] = $tmp[13];
-        $result['swingRate'] = $result['swing'] / $tmp[3];
+        $result['quoteTime'] = $this->quoteTime;
+        $result['swing'] = $tmp[9];
+        $result['swingRate'] = $result['swing'] / $tmp[10];
 
         return parent::each($resStr ? $resStr : '');
     }
